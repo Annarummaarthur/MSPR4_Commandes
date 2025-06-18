@@ -1,0 +1,11 @@
+# ignore .env
+.env
+
+# ignore .pytest_cache
+.pytest_cache
+
+# ignore .venv
+.venv
+
+# ignore __pycache__
+__pycache__
