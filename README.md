@@ -79,7 +79,7 @@ python test_db.py
 Tous les endpoints (sauf `/`) nécessitent un token Bearer :
 
 ```bash
-curl -H "Authorization: Bearer mspr4_commandes_api_token_secure_2024" \
+curl -H "Authorization: Bearer TOKEN" \
      http://localhost:8001/commandes
 ```
 
