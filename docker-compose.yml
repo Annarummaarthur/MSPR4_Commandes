@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  commandes-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mspr4-commandes
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - API_TOKEN=${API_TOKEN}
+    env_file:
+      - .env
+    volumes:
+      # Volume pour les logs (optionnel)
+      - ./logs:/app/logs
+      # Volume pour le développement (optionnel - à commenter en production)
+      - .:/app
+    restart: unless-stopped
+    networks:
+      - mspr4-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+# Réseau pour la communication entre microservices
+networks:
+  mspr4-network:
+    driver: bridge
+    external: false
+
+# Volume pour persister les logs
+volumes:
+  logs:
+    driver: local
