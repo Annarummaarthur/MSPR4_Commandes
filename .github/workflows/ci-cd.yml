@@ -3,12 +3,8 @@ name: MSPR4 Commandes - CI/CD Pipeline
 on:
   push:
     branches: [main, develop]
-    paths:
-      - "MSPR4_Commandes/**"
   pull_request:
     branches: [main, develop]
-    paths:
-      - "MSPR4_Commandes/**"
 
 env:
   REGISTRY: ghcr.io
