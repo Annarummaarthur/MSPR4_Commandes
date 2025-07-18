@@ -95,7 +95,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: 🔨 Build et push de l'image Docker
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ${{ env.WORKING_DIR }}
           file: ${{ env.WORKING_DIR }}/Dockerfile
