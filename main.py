@@ -453,4 +453,4 @@ def get_commandes_by_status(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001) 
+    uvicorn.run(app, host="0.0.0.0", port=8001) # Test CI/CD - Ven 18 jul 2025 23:33:24 CEST
