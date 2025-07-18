@@ -1,5 +1,5 @@
 requests==2.31.0
-psycopg==3.2.3
+psycopg==3.2.9
 fastapi
 uvicorn
 sqlalchemy
