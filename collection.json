@@ -1,0 +1,683 @@
+{
+  "info": {
+    "name": "MSPR4 Commandes API",
+    "description": "Collection Postman pour le microservice Commandes MSPR4\n\n🏗️ **Architecture Microservices Pure**\n- Gestion UNIQUEMENT des commandes\n- Communication inter-services via API\n- Base de données PostgreSQL (Supabase)\n\n🔐 **Authentification**\nTous les endpoints (sauf health check) nécessitent un Bearer Token.\n\n📋 **Statuts disponibles**\n- pending\n- processing  \n- completed\n- cancelled",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8001",
+      "type": "string"
+    },
+    {
+      "key": "api_token",
+      "value": "your_api_token_here",
+      "type": "string"
+    },
+    {
+      "key": "commande_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "CMD001",
+      "type": "string"
+    },
+    {
+      "key": "customer_id",
+      "value": "CLIENT123",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{api_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🏥 Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Vérification de l'état du service (pas d'authentification requise)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📊 Statistiques",
+      "item": [
+        {
+          "name": "Get Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stats",
+              "host": ["{{base_url}}"],
+              "path": ["stats"]
+            },
+            "description": "Récupérer les statistiques globales des commandes"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🛒 Gestion des Commandes",
+      "item": [
+        {
+          "name": "List Commandes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/commandes?limit=10&offset=0&order_by=created_at&order_direction=desc",
+              "host": ["{{base_url}}"],
+              "path": ["commandes"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Nombre de commandes à retourner (max 1000)"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Nombre de commandes à ignorer"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "Filtrer par statut",
+                  "disabled": true
+                },
+                {
+                  "key": "customer_id",
+                  "value": "{{customer_id}}",
+                  "description": "Filtrer par ID client",
+                  "disabled": true
+                },
+                {
+                  "key": "order_by",
+                  "value": "created_at",
+                  "description": "Champ de tri (id, created_at, total_amount, status)"
+                },
+                {
+                  "key": "order_direction",
+                  "value": "desc",
+                  "description": "Direction du tri (asc, desc)"
+                }
+              ]
+            },
+            "description": "Récupérer la liste des commandes avec filtres et pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Commande",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has commande data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('order_id');",
+                  "    pm.expect(jsonData).to.have.property('customer_id');",
+                  "    ",
+                  "    // Sauvegarder l'ID pour les autres tests",
+                  "    pm.collectionVariables.set('commande_id', jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": \"CMD{{$randomInt}}\",\n  \"customer_id\": \"{{customer_id}}\",\n  \"total_amount\": 150.50,\n  \"status\": \"pending\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/commandes",
+              "host": ["{{base_url}}"],
+              "path": ["commandes"]
+            },
+            "description": "Créer une nouvelle commande"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Commande by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/commandes/{{commande_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["commandes", "{{commande_id}}"]
+            },
+            "description": "Récupérer une commande par son ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Commande by Order ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/commandes/order/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["commandes", "order", "{{order_id}}"]
+            },
+            "description": "Récupérer une commande par son order_id"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Commande",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"{{customer_id}}\",\n  \"total_amount\": 200.75,\n  \"status\": \"processing\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/commandes/{{commande_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["commandes", "{{commande_id}}"]
+            },
+            "description": "Mettre à jour une commande existante"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Commande",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/commandes/{{commande_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["commandes", "{{commande_id}}"]
+            },
+            "description": "Supprimer une commande"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔍 Recherche et Filtres",
+      "item": [
+        {
+          "name": "Search Commandes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/commandes/search?q=CMD&min_amount=100&max_amount=500&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["commandes", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "CMD",
+                  "description": "Recherche dans order_id ou customer_id"
+                },
+                {
+                  "key": "min_amount",
+                  "value": "100",
+                  "description": "Montant minimum"
+                },
+                {
+                  "key": "max_amount",
+                  "value": "500",
+                  "description": "Montant maximum"
+                },
+                {
+                  "key": "date_from",
+                  "value": "2024-01-01",
+                  "description": "Date de début (YYYY-MM-DD)",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "2024-12-31",
+                  "description": "Date de fin (YYYY-MM-DD)",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Limite de résultats"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Décalage pour pagination",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Recherche avancée dans les commandes"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Commandes by Customer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/commandes/customer/{{customer_id}}?limit=10&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["commandes", "customer", "{{customer_id}}"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Nombre de commandes à retourner"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Nombre de commandes à ignorer"
+                }
+              ]
+            },
+            "description": "Récupérer toutes les commandes d'un client"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Commandes by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/commandes/status/pending?limit=10&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["commandes", "status", "pending"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Nombre de commandes à retourner"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Nombre de commandes à ignorer"
+                }
+              ]
+            },
+            "description": "Récupérer toutes les commandes avec un statut donné"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔄 Gestion des Statuts",
+      "item": [
+        {
+          "name": "Update Status to Processing",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"processing\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/commandes/{{commande_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["commandes", "{{commande_id}}", "status"]
+            },
+            "description": "Mettre à jour le statut vers 'processing'"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Status to Completed",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/commandes/{{commande_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["commandes", "{{commande_id}}", "status"]
+            },
+            "description": "Mettre à jour le statut vers 'completed'"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Status to Cancelled",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"cancelled\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/commandes/{{commande_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["commandes", "{{commande_id}}", "status"]
+            },
+            "description": "Mettre à jour le statut vers 'cancelled'"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧪 Tests d'Intégration",
+      "item": [
+        {
+          "name": "Workflow Complet",
+          "item": [
+            {
+              "name": "1. Create Test Commande",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Commande créée avec succès\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql('pending');",
+                      "    pm.collectionVariables.set('test_commande_id', jsonData.id);",
+                      "    pm.collectionVariables.set('test_order_id', jsonData.order_id);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"order_id\": \"TEST_{{$randomInt}}\",\n  \"customer_id\": \"TEST_CLIENT_{{$randomInt}}\",\n  \"total_amount\": 99.99,\n  \"status\": \"pending\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/commandes",
+                  "host": ["{{base_url}}"],
+                  "path": ["commandes"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "2. Update to Processing",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Statut mis à jour vers processing\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql('processing');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"processing\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/commandes/{{test_commande_id}}/status",
+                  "host": ["{{base_url}}"],
+                  "path": ["commandes", "{{test_commande_id}}", "status"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "3. Complete Order",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Commande complétée\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql('completed');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"completed\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/commandes/{{test_commande_id}}/status",
+                  "host": ["{{base_url}}"],
+                  "path": ["commandes", "{{test_commande_id}}", "status"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "4. Cleanup - Delete Test Commande",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Commande de test supprimée\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/commandes/{{test_commande_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["commandes", "{{test_commande_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "❌ Tests d'Erreurs",
+      "item": [
+        {
+          "name": "Unauthorized Access (No Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Unauthorized access blocked\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/commandes",
+              "host": ["{{base_url}}"],
+              "path": ["commandes"]
+            },
+            "description": "Test d'accès non autorisé (sans token)"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Status Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Invalid status rejected\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"invalid_status\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/commandes/1/status",
+              "host": ["{{base_url}}"],
+              "path": ["commandes", "1", "status"]
+            },
+            "description": "Test de mise à jour avec un statut invalide"
+          },
+          "response": []
+        },
+        {
+          "name": "Non-existent Commande",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Non-existent commande returns 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/commandes/99999",
+              "host": ["{{base_url}}"],
+              "path": ["commandes", "99999"]
+            },
+            "description": "Test d'accès à une commande inexistante"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
