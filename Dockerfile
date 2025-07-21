@@ -38,4 +38,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8001/ || exit 1
 
 # Commande par défaut pour lancer l'application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"] 
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003"]
