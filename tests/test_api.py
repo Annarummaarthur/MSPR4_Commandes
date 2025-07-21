@@ -21,7 +21,7 @@ def test_create_order(client, auth_headers):
             {
                 "product_id": "PROD_001",
                 "product_name": "Café Colombien",
-                "product_price": 15.99,
+                "product_price": 16,
                 "quantity": 2,
                 "product_sku": "COL001",
                 "product_description": "Café colombien premium",
@@ -46,7 +46,7 @@ def test_create_order(client, auth_headers):
     assert data["status"] == "pending"
     assert len(data["items"]) == 2
 
-    expected_total = (15.99 * 2) + (18.50 * 1)
+    expected_total = (16 * 2) + (18.50 * 1)
     assert float(data["total_amount"]) == expected_total
 
     return data["order_id"]
