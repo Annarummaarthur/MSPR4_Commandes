@@ -1,135 +1,40 @@
-from sqlalchemy import create_engine, text
+# tests/test_db.py
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
+from app.db import engine
 
 
-def test_connection():
+def test_connection_to_database():
     try:
-        DATABASE_URL = os.getenv("DATABASE_URL")
-        API_TOKEN = os.getenv("API_TOKEN")
+        with engine.connect() as connection:
+            result = connection.execute(text("SELECT 1"))
+            assert result.fetchone()[0] == 1
+    except SQLAlchemyError as e:
+        assert False, f"Database connection failed: {e}"
 
-        if not DATABASE_URL:
-            print("❌ DATABASE_URL non trouvée dans le fichier .env")
-            return
 
-        print(f"✅ Connexion à la base de données MSPR4_Commandes (Supabase) OK")
-        print(f"🔗 Database URL: {DATABASE_URL[:50]}...")
-        print(f"🔑 API Token configuré: {'Oui' if API_TOKEN else 'Non'}")
+def test_database_tables_creation():
+    """Test que les tables sont créées correctement"""
+    from app.models import OrderModel, OrderItemModel, OrderEventModel
+    from app.db import Base
 
-        engine = create_engine(DATABASE_URL)
+    try:
+        # Créer les tables
+        Base.metadata.create_all(bind=engine)
 
-        with engine.connect() as db:
-            result = db.execute(
-                text(
-                    """
-                SELECT table_name 
-                FROM information_schema.tables 
-                WHERE table_schema = 'public'
-                ORDER BY table_name
-            """
-                )
-            )
-            tables = [row[0] for row in result.fetchall()]
-            print(f"📊 Tables disponibles: {tables}")
+        # Vérifier que les tables existent
+        with engine.connect() as connection:
+            # Test table orders
+            result = connection.execute(text("SELECT COUNT(*) FROM orders"))
+            assert result.fetchone()[0] >= 0
 
-            if "commandes" in tables:
-                result = db.execute(text("SELECT COUNT(*) FROM commandes"))
-                count = result.fetchone()[0]
-                print(f"📦 Nombre de commandes: {count}")
+            # Test table order_items
+            result = connection.execute(text("SELECT COUNT(*) FROM order_items"))
+            assert result.fetchone()[0] >= 0
 
-                if count > 0:
-                    result = db.execute(
-                        text(
-                            """
-                        SELECT order_id, customer_id, total_amount, status 
-                        FROM commandes 
-                        ORDER BY created_at DESC 
-                        LIMIT 3
-                    """
-                        )
-                    )
-                    examples = result.fetchall()
-                    print("📋 Exemples de commandes:")
-                    for example in examples:
-                        print(
-                            f"   • Order ID: {example[0]}, Client: {example[1]}, Montant: {example[2]}€, Statut: {example[3]}"
-                        )
-
-                result = db.execute(
-                    text(
-                        """
-                    SELECT status, COUNT(*) as count, COALESCE(SUM(total_amount), 0) as total
-                    FROM commandes 
-                    GROUP BY status 
-                    ORDER BY count DESC
-                """
-                    )
-                )
-                stats = result.fetchall()
-                print("\n📊 Répartition par statut:")
-                for stat in stats:
-                    print(
-                        f"   • {stat[0]}: {stat[1]} commande(s) - {float(stat[2]):.2f}€"
-                    )
-            else:
-                print("⚠️  Table 'commandes' non trouvée")
-
-            print("\n🏗️ Structure de la table commandes:")
-            result = db.execute(
-                text(
-                    """
-                SELECT column_name, data_type, is_nullable, column_default
-                FROM information_schema.columns 
-                WHERE table_name = 'commandes' 
-                ORDER BY ordinal_position
-            """
-                )
-            )
-            for col in result.fetchall():
-                nullable = "NULL" if col[2] == "YES" else "NOT NULL"
-                default = f" DEFAULT {col[3]}" if col[3] else ""
-                print(f"   • {col[0]}: {col[1]} ({nullable}){default}")
-
-            print("\n🚀 Index disponibles:")
-            result = db.execute(
-                text(
-                    """
-                SELECT indexname, indexdef 
-                FROM pg_indexes 
-                WHERE tablename = 'commandes'
-                ORDER BY indexname
-            """
-                )
-            )
-            indexes = result.fetchall()
-            for idx in indexes:
-                print(f"   • {idx[0]}")
-
-            print("\n⚡ Test de performance:")
-            import time
-
-            start_time = time.time()
-            result = db.execute(
-                text("SELECT COUNT(*) FROM commandes WHERE status = 'completed'")
-            )
-            end_time = time.time()
-            completed_count = result.fetchone()[0]
-            print(
-                f"   • Requête sur statut 'completed': {completed_count} résultats en {(end_time - start_time)*1000:.2f}ms"
-            )
+            # Test table order_events
+            result = connection.execute(text("SELECT COUNT(*) FROM order_events"))
+            assert result.fetchone()[0] >= 0
 
     except SQLAlchemyError as e:
-        print("❌ Erreur de connexion :", e)
-    except Exception as e:
-        print("❌ Erreur générale :", e)
-
-
-if __name__ == "__main__":
-    print("🔍 Test de connexion à la base de données - Microservice Commandes MSPR4")
-    print("=" * 75)
-    test_connection()
-    print("=" * 75)
-    print("✅ Test terminé")
+        assert False, f"Database tables creation failed: {e}"

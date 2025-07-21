@@ -1,6 +1,5 @@
 # tests/test_api.py
 
-
 def test_read_root(client):
     response = client.get("/")
     assert response.status_code == 200
@@ -24,7 +23,7 @@ def test_create_order(client, auth_headers):
                 "product_price": 15.99,
                 "quantity": 2,
                 "product_sku": "COL001",
-                "product_description": "Café colombien premium",
+                "product_description": "Café colombien premium"
             },
             {
                 "product_id": "PROD_002",
@@ -32,9 +31,9 @@ def test_create_order(client, auth_headers):
                 "product_price": 18.50,
                 "quantity": 1,
                 "product_sku": "ETH001",
-                "product_description": "Café éthiopien single origin",
-            },
-        ],
+                "product_description": "Café éthiopien single origin"
+            }
+        ]
     }
 
     response = client.post("/orders", json=order_data, headers=auth_headers)
@@ -46,6 +45,7 @@ def test_create_order(client, auth_headers):
     assert data["status"] == "pending"
     assert len(data["items"]) == 2
 
+    # Vérifier le calcul du montant total
     expected_total = (15.99 * 2) + (18.50 * 1)
     assert float(data["total_amount"]) == expected_total
 
@@ -53,8 +53,10 @@ def test_create_order(client, auth_headers):
 
 
 def test_get_order(client, auth_headers):
+    # Créer d'abord une commande
     order_id = test_create_order(client, auth_headers)
 
+    # Récupérer la commande
     response = client.get(f"/orders/{order_id}", headers=auth_headers)
     assert response.status_code == 200
 
@@ -64,8 +66,10 @@ def test_get_order(client, auth_headers):
 
 
 def test_list_orders(client, auth_headers):
+    # Créer une commande
     test_create_order(client, auth_headers)
 
+    # Lister les commandes
     response = client.get("/orders", headers=auth_headers)
     assert response.status_code == 200
 
@@ -73,6 +77,7 @@ def test_list_orders(client, auth_headers):
     assert isinstance(data, list)
     assert len(data) >= 1
 
+    # Vérifier la structure d'un résumé de commande
     order_summary = data[0]
     assert "order_id" in order_summary
     assert "customer_id" in order_summary
@@ -83,13 +88,16 @@ def test_list_orders(client, auth_headers):
 
 
 def test_update_order_status(client, auth_headers):
+    # Créer une commande
     order_id = test_create_order(client, auth_headers)
 
-    status_update = {"status": "confirmed", "notes": "Commande confirmée par le client"}
+    # Mettre à jour le statut
+    status_update = {
+        "status": "confirmed",
+        "notes": "Commande confirmée par le client"
+    }
 
-    response = client.put(
-        f"/orders/{order_id}/status", json=status_update, headers=auth_headers
-    )
+    response = client.put(f"/orders/{order_id}/status", json=status_update, headers=auth_headers)
     assert response.status_code == 200
 
     data = response.json()
@@ -97,11 +105,11 @@ def test_update_order_status(client, auth_headers):
 
 
 def test_cancel_order(client, auth_headers):
+    # Créer une commande
     order_id = test_create_order(client, auth_headers)
 
-    response = client.post(
-        f"/orders/{order_id}/cancel?reason=Demande client", headers=auth_headers
-    )
+    # Annuler la commande
+    response = client.post(f"/orders/{order_id}/cancel?reason=Demande client", headers=auth_headers)
     assert response.status_code == 200
 
     data = response.json()
@@ -109,8 +117,10 @@ def test_cancel_order(client, auth_headers):
 
 
 def test_search_orders(client, auth_headers):
+    # Créer une commande
     test_create_order(client, auth_headers)
 
+    # Rechercher par ID client
     response = client.get("/orders/search?q=CUST_001", headers=auth_headers)
     assert response.status_code == 200
 
@@ -120,8 +130,10 @@ def test_search_orders(client, auth_headers):
 
 
 def test_get_customer_orders(client, auth_headers):
+    # Créer une commande
     test_create_order(client, auth_headers)
 
+    # Récupérer les commandes du client
     response = client.get("/customers/CUST_001/orders", headers=auth_headers)
     assert response.status_code == 200
 
@@ -132,8 +144,10 @@ def test_get_customer_orders(client, auth_headers):
 
 
 def test_get_orders_by_status(client, auth_headers):
+    # Créer une commande
     test_create_order(client, auth_headers)
 
+    # Récupérer les commandes par statut
     response = client.get("/orders/status/pending", headers=auth_headers)
     assert response.status_code == 200
 
@@ -143,6 +157,7 @@ def test_get_orders_by_status(client, auth_headers):
 
 
 def test_get_statistics(client, auth_headers):
+    # Créer quelques commandes
     test_create_order(client, auth_headers)
 
     response = client.get("/stats", headers=auth_headers)
@@ -161,20 +176,27 @@ def test_get_statistics(client, auth_headers):
 
 
 def test_unauthorized_access(client):
+    # Test sans token
     response = client.get("/orders")
     assert response.status_code == 403
 
+    # Test avec mauvais token
     bad_headers = {"Authorization": "Bearer wrong_token"}
     response = client.get("/orders", headers=bad_headers)
     assert response.status_code == 403
 
 
 def test_create_order_validation(client, auth_headers):
-    invalid_order = {"customer_id": "CUST_001", "items": []}
+    # Test avec données invalides - pas d'items
+    invalid_order = {
+        "customer_id": "CUST_001",
+        "items": []
+    }
 
     response = client.post("/orders", json=invalid_order, headers=auth_headers)
     assert response.status_code == 422
 
+    # Test avec prix négatif
     invalid_order = {
         "customer_id": "CUST_001",
         "items": [
@@ -182,9 +204,9 @@ def test_create_order_validation(client, auth_headers):
                 "product_id": "PROD_001",
                 "product_name": "Test Product",
                 "product_price": -10.0,
-                "quantity": 1,
+                "quantity": 1
             }
-        ],
+        ]
     }
 
     response = client.post("/orders", json=invalid_order, headers=auth_headers)
@@ -197,42 +219,44 @@ def test_order_not_found(client, auth_headers):
 
 
 def test_invalid_status_update(client, auth_headers):
+    # Créer une commande
     order_id = test_create_order(client, auth_headers)
 
-    invalid_status = {"status": "invalid_status"}
+    # Essayer avec un statut invalide
+    invalid_status = {
+        "status": "invalid_status"
+    }
 
-    response = client.put(
-        f"/orders/{order_id}/status", json=invalid_status, headers=auth_headers
-    )
+    response = client.put(f"/orders/{order_id}/status", json=invalid_status, headers=auth_headers)
     assert response.status_code == 422
 
 
 def test_workflow_complete(client, auth_headers):
     """Test d'un workflow complet de commande"""
+    # 1. Créer la commande
     order_id = test_create_order(client, auth_headers)
 
-    response = client.put(
-        f"/orders/{order_id}/status", json={"status": "confirmed"}, headers=auth_headers
-    )
+    # 2. Confirmer la commande
+    response = client.put(f"/orders/{order_id}/status",
+                          json={"status": "confirmed"}, headers=auth_headers)
     assert response.status_code == 200
 
-    response = client.put(
-        f"/orders/{order_id}/status",
-        json={"status": "processing"},
-        headers=auth_headers,
-    )
+    # 3. Traiter la commande
+    response = client.put(f"/orders/{order_id}/status",
+                          json={"status": "processing"}, headers=auth_headers)
     assert response.status_code == 200
 
-    response = client.put(
-        f"/orders/{order_id}/status", json={"status": "shipped"}, headers=auth_headers
-    )
+    # 4. Expédier la commande
+    response = client.put(f"/orders/{order_id}/status",
+                          json={"status": "shipped"}, headers=auth_headers)
     assert response.status_code == 200
 
-    response = client.put(
-        f"/orders/{order_id}/status", json={"status": "delivered"}, headers=auth_headers
-    )
+    # 5. Livrer la commande
+    response = client.put(f"/orders/{order_id}/status",
+                          json={"status": "delivered"}, headers=auth_headers)
     assert response.status_code == 200
 
+    # 6. Vérifier l'état final
     response = client.get(f"/orders/{order_id}", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
