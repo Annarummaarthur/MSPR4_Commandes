@@ -1,40 +1,38 @@
-version: "3.8"
-
+# docker-compose.yml
 services:
-  commandes-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: mspr4-commandes
+  orders-api:
+    build: .
     ports:
-      - "8001:8001"
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - API_TOKEN=${API_TOKEN}
+      - "8003:8003"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     env_file:
       - .env
     volumes:
-      # Volume pour les logs (optionnel)
-      - ./logs:/app/logs
-      # Volume pour le développement (optionnel - à commenter en production)
       - .:/app
-    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - mspr4-network
+      - payetonkawa-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: password
+    networks:
+      - payetonkawa-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/"]
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 60s
+      retries: 5
+      start_period: 30s
 
-# Réseau pour la communication entre microservices
 networks:
-  mspr4-network:
-    driver: bridge
-    external: false
-
-# Volume pour persister les logs
-volumes:
-  logs:
-    driver: local
+  payetonkawa-network:
+    external: true

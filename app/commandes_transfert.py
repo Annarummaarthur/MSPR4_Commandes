@@ -1,14 +1,10 @@
 import requests
 import psycopg
-import json
 import os
-from datetime import datetime
 from dotenv import load_dotenv
 
-# Charger les variables d'environnement
 load_dotenv()
 
-# 1. Récupération des données mockées
 MOCK_API_URL = "https://615f5fb4f7254d0017068109.mockapi.io/api/v1/orders"
 response = requests.get(MOCK_API_URL)
 orders = response.json()
@@ -24,7 +20,8 @@ cursor = conn.cursor()
 print(f"🔗 Connexion à la base de données : {DATABASE_URL[:50]}...")
 
 # 3. Création de la table commandes uniquement (microservice pur)
-cursor.execute("""
+cursor.execute(
+    """
 DROP TABLE IF EXISTS commandes_produits;
 DROP TABLE IF EXISTS produits_commandes;
 DROP TABLE IF EXISTS commandes;
@@ -45,7 +42,8 @@ CREATE INDEX idx_commandes_order_id ON commandes(order_id);
 CREATE INDEX idx_commandes_customer_id ON commandes(customer_id);
 CREATE INDEX idx_commandes_status ON commandes(status);
 CREATE INDEX idx_commandes_created_at ON commandes(created_at);
-""")
+"""
+)
 
 print("✅ Table commandes créée selon l'architecture microservices pure!")
 print("🚀 Index de performance créés pour optimiser les requêtes!")
@@ -64,19 +62,22 @@ for order in orders:
                     total_amount += float(product["details"]["price"])
 
         # Insertion de la commande pure (pas de gestion des produits)
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO commandes (
                 order_id, customer_id, created_at, total_amount, status
             )
             VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (order_id) DO NOTHING;
-        """, (
-            order.get("id"),
-            order.get("customerId") or order.get("customer_id") or "unknown",
-            order.get("createdAt"),
-            total_amount,
-            "completed"  # Statut par défaut pour les données mockées
-        ))
+        """,
+            (
+                order.get("id"),
+                order.get("customerId") or order.get("customer_id") or "unknown",
+                order.get("createdAt"),
+                total_amount,
+                "completed",  # Statut par défaut pour les données mockées
+            ),
+        )
 
         if cursor.rowcount > 0:
             print(f"✅ Commande {order.get('id')} importée (montant: {total_amount}€)")
@@ -98,19 +99,25 @@ nb_commandes = cursor.fetchone()[0]
 cursor.execute("SELECT SUM(total_amount) FROM commandes;")
 total_global = cursor.fetchone()[0]
 
-cursor.execute("SELECT status, COUNT(*) FROM commandes GROUP BY status ORDER BY status;")
+cursor.execute(
+    "SELECT status, COUNT(*) FROM commandes GROUP BY status ORDER BY status;"
+)
 stats_status = cursor.fetchall()
 
 cursor.close()
 conn.close()
 
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("📊 STATISTIQUES D'IMPORTATION (Microservice Commandes Pur)")
-print("="*60)
+print("=" * 60)
 print(f"   • Commandes importées cette session: {commandes_importees}")
 print(f"   • Erreurs rencontrées: {erreurs}")
 print(f"   • Total commandes en base: {nb_commandes}")
-print(f"   • Montant total des commandes: {total_global:.2f}€" if total_global else "   • Montant total: 0€")
+print(
+    f"   • Montant total des commandes: {total_global:.2f}€"
+    if total_global
+    else "   • Montant total: 0€"
+)
 
 print(f"\n📋 Répartition par statut:")
 for status, count in stats_status:
@@ -122,4 +129,4 @@ print("   • 🛒 Microservice Commandes: gère UNIQUEMENT les commandes")
 print("   • 📦 Microservice Produits: gère UNIQUEMENT le catalogue (à développer)")
 print("   • 👥 Microservice Clients: gère UNIQUEMENT les clients (à développer)")
 print("\n💡 Les liens entre services se feront via API calls ou message broker")
-print(f"\n🔑 Token API configuré: {os.getenv('API_TOKEN', 'Non configuré')}") 
+print(f"\n🔑 Token API configuré: {os.getenv('API_TOKEN', 'Non configuré')}")
