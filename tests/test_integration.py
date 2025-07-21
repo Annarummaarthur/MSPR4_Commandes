@@ -3,8 +3,8 @@ import httpx
 import asyncio
 import os
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8001")
-API_TOKEN = os.getenv("API_TOKEN", "test_token")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8003")
+API_TOKEN = os.getenv("API_TOKEN")
 
 
 @pytest.mark.asyncio
