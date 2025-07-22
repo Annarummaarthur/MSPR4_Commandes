@@ -45,7 +45,7 @@ class MessageBroker:
                 print(f"Connection attempt {attempt + 1} failed: {str(e)}")
 
                 if attempt < max_retries - 1:
-                    print(f"⏳ Retrying in {retry_delay} seconds...")
+                    print(f"Retrying in {retry_delay} seconds...")
                     await asyncio.sleep(retry_delay)
                     retry_delay *= 1.5
                 else:
@@ -80,7 +80,7 @@ class MessageBroker:
 
             await self.events_exchange.publish(message, routing_key=event_type)
 
-            print(f"📤 Published event: {event_type} | ID: {message_body['event_id']}")
+            print(f"Published event: {event_type} | ID: {message_body['event_id']}")
 
         except Exception as e:
             print(f"Failed to publish event {event_type}: {str(e)}")
@@ -99,7 +99,7 @@ class MessageBroker:
 
             for pattern in event_patterns:
                 await queue.bind(self.events_exchange, routing_key=pattern)
-                print(f"📥 Subscribed to pattern: {pattern}")
+                print(f"Subscribed to pattern: {pattern}")
 
             await queue.consume(callback)
 
