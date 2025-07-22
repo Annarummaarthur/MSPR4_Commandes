@@ -20,9 +20,9 @@ def test_orders_workflow(client, auth_headers):
                 "product_id": "PROD_001",
                 "product_name": "Test Coffee",
                 "product_price": 19.99,
-                "quantity": 1
+                "quantity": 1,
             }
-        ]
+        ],
     }
 
     response = client.post("/orders", json=order_data, headers=auth_headers)
