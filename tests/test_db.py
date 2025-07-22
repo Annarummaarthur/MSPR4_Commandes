@@ -15,24 +15,18 @@ def test_connection_to_database():
 
 def test_database_tables_creation():
     """Test que les tables sont créées correctement"""
-    from app.models import OrderModel, OrderItemModel, OrderEventModel
     from app.db import Base
 
     try:
-        # Créer les tables
         Base.metadata.create_all(bind=engine)
 
-        # Vérifier que les tables existent
         with engine.connect() as connection:
-            # Test table orders
             result = connection.execute(text("SELECT COUNT(*) FROM orders"))
             assert result.fetchone()[0] >= 0
 
-            # Test table order_items
             result = connection.execute(text("SELECT COUNT(*) FROM order_items"))
             assert result.fetchone()[0] >= 0
 
-            # Test table order_events
             result = connection.execute(text("SELECT COUNT(*) FROM order_events"))
             assert result.fetchone()[0] >= 0
 

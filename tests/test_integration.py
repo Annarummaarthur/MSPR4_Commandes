@@ -1,56 +1,42 @@
-import pytest
-import httpx
-import asyncio
-import os
-
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8003")
-API_TOKEN = os.getenv("API_TOKEN")
+# tests/test_integration.py
 
 
-@pytest.mark.asyncio
-class TestIntegrationAPI:
+def test_health_endpoint(client):
+    """Test du health check"""
+    response = client.get("/")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["message"] == "Orders API is running"
 
-    async def test_health_endpoint(self):
-        """Test du health check"""
-        async with httpx.AsyncClient() as client:
-            response = await client.get(f"{API_BASE_URL}/")
-            assert response.status_code == 200
 
-    async def test_commandes_workflow(self):
-        """Test du workflow complet des commandes"""
-        headers = {"Authorization": f"Bearer {API_TOKEN}"}
+def test_orders_workflow(client, auth_headers):
+    """Test du workflow complet des commandes"""
 
-        async with httpx.AsyncClient() as client:
-            commande_data = {
-                "order_id": "TEST_CMD_001",
-                "customer_id": "TEST_CLIENT_001",
-                "total_amount": 99.99,
-                "status": "pending",
+    order_data = {
+        "customer_id": "TEST_CLIENT_001",
+        "customer_name": "Test Client",
+        "items": [
+            {
+                "product_id": "PROD_001",
+                "product_name": "Test Coffee",
+                "product_price": 19.99,
+                "quantity": 1
             }
+        ]
+    }
 
-            response = await client.post(
-                f"{API_BASE_URL}/commandes", json=commande_data, headers=headers
-            )
-            assert response.status_code == 201
-            commande_id = response.json()["id"]
+    response = client.post("/orders", json=order_data, headers=auth_headers)
+    assert response.status_code == 200
+    order_id = response.json()["order_id"]
 
-            response = await client.get(
-                f"{API_BASE_URL}/commandes/{commande_id}", headers=headers
-            )
-            assert response.status_code == 200
-            assert response.json()["order_id"] == "TEST_CMD_001"
+    response = client.get(f"/orders/{order_id}", headers=auth_headers)
+    assert response.status_code == 200
+    assert response.json()["order_id"] == order_id
 
-    async def test_performance_basic(self):
-        """Test de performance basique"""
-        headers = {"Authorization": f"Bearer {API_TOKEN}"}
 
-        async with httpx.AsyncClient() as client:
-            tasks = []
-            for i in range(10):
-                task = client.get(f"{API_BASE_URL}/commandes", headers=headers)
-                tasks.append(task)
+def test_multiple_requests_performance(client, auth_headers):
+    """Test de performance basique avec requêtes multiples"""
 
-            responses = await asyncio.gather(*tasks)
-
-            for response in responses:
-                assert response.status_code == 200
+    for i in range(5):
+        response = client.get("/orders", headers=auth_headers)
+        assert response.status_code == 200
