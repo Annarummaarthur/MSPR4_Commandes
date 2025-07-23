@@ -29,7 +29,7 @@ from app.schemas import (
     OrderStats,
 )
 
-API_TOKEN = os.getenv("API_TOKEN", "supersecrettoken123")
+API_TOKEN = os.getenv("API_TOKEN")
 security = HTTPBearer()
 router = APIRouter()
 
