@@ -157,7 +157,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: security-reports-clients  # or security-reports-orders
+          name: security-reports-orders
           path: |
             bandit-report.json
             safety-report.json
