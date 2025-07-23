@@ -12,7 +12,7 @@ from app.messaging.broker import MessageBroker
 
 load_dotenv()
 
-RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://admin:password@rabbitmq:5672/")
+RABBITMQ_URL = os.getenv("RABBITMQ_URL")
 SERVICE_NAME = "orders-api"
 
 broker = MessageBroker(RABBITMQ_URL, SERVICE_NAME)
