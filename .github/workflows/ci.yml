@@ -185,7 +185,7 @@ jobs:
           echo "Building orders-api:$IMAGE_TAG"
 
       - name: Build Docker image locally
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           load: true
